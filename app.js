@@ -43,7 +43,7 @@ var bug = connection.define('bug',{
     },
     developerId: {
         type: Sequelize.INTEGER,
-        model: 'developers',//<<<  its table's name, not object name
+        model: 'developers',//<<<  note: its table's name, not object name
         Key: 'id' // <<< Note, its a column name
   },
 
