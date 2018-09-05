@@ -1,87 +1,51 @@
-var Sequelize = require ('sequelize');
-var connection = new Sequelize('one','root','password',{
-    host: 'localhost',
-    dialect: 'mysql'
-});
+const express = require('express')
+const bodyParser = require('body-parser')
 
-var developer = connection.define('developer',{
-    info: {
-        type : Sequelize.JSON,
+const app = express()
+app.use(bodyParser.json())
+
+// API ENDPOINTS
+
+const port = 3000
+app.listen(port, () => {
+    console.log(`Running on http://localhost:${port}`)
+})
+const { Bug, Developer, Tester, Issuer } = require('./sequelize')
+// create a Bug
+app.post('/api/bugs', (req, res) => {
+    Bug.create(req.body)
+        .then(bug => res.json(bug))
+})
+// get all Bugs
+app.get('/api/bugs', (req, res) => {
+    Bug.findAll().then(bugs => res.json(bugs))
+})
+
+// adding a developer
+app.post('/api/developers', (req, res) => {
+    const body = req.body
+    // either find a bug with info or create a new one
+    const bugs = body.bugs.map(bug => bug.findOrCreate({ where: { info: bug.info }, defaults: { info: bug.info }})
+                                         .spread((bug, created) => bug))
+    Issuer.findById(body.IssuerId)
+        .then(() => Developer.create(body))
+        .then(developer => Promise.all(bugs).then(storedBugs => developer.addBugs(storedBugs)).then(() => developer))
+        .then(developer => Developer.findOne({ where: {id: developer.id}, include: [Issuer, Bug]}))
+        .then(developerWithAssociations => res.json(developerWithAssociations))
+        .catch(err => res.status(400).json({ err: `Bug with id = [${body.ussuerId}] doesn\'t exist.`}))
+})
+
+// find bugs belonging to one developer or all bugs
+app.get('/api/bugs/:developerId?', (req, res) => {
+    let query;
+    if(req.params.developerId) {
+        query = Bug.findAll({ include: [
+            { model: Developer, where: { id: req.params.developerId } },
+            { model: Issuer }
+        ]})
+    } else {
+        query = Bug.findAll({ include: [Issuer, Developer]})
     }
-});
+    return query.then(bugs => res.json(bugs))
+})
 
-connection.sync().then(function(){
-    developer.create({
-        info: 'test test'});
-});
-
-var issuer = connection.define('issuer',{
-    info: {
-        type : Sequelize.JSON,
-    }
-});
-
-connection.sync().then(function(){
-    issuer.create({
-        info: 'test test'});
-});
-
-var tester = connection.define('tester',{
-    info: {
-        type : Sequelize.JSON,
-    }
-});
-
-connection.sync().then(function(){
-    tester.create({
-        info: 'test test'});
-});
-
-var bug = connection.define('bug',{
-    info: {
-        type : Sequelize.JSON,
-    },
-    developerId: {
-        type: Sequelize.INTEGER,
-        model: 'developers',//<<<  note: its table's name, not object name
-        Key: 'id' // <<< Note, its a column name
-  },
-
-  issuerId: {
-    type: Sequelize.INTEGER,
-    model: 'issuers', 
-    Key: 'id' 
-},
-
-testerId: {
-    type: Sequelize.INTEGER,
-    model: 'testers', 
-    Key: 'id' 
-}
-
-});
-
-connection.sync().then(function(){
-    bug.create({
-        info: 'test test',
-        testerId: 1,
-        issuerId: 1,
-        developerId:1
-    });
-});
-
-issuer.belongsTo(bug);
-
-tester.belongsTo(bug);
-
-developer.belongsTo(bug);
-
-
-/*connection.sync().then(function(){
-    bug.FindById(1).then(function(bug){
-        consol.log(bug.dataValuse);
-        });
-});
-
-*/  
-   
