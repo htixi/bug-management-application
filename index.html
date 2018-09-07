@@ -4,7 +4,7 @@
     <title>Bugs Management Application</title>
     <link href="content/css/styles.css" rel="stylesheet" type="text/css" />
   <script src="views\lib\angular.min.js"></script>
-  <script src="app.js"></script>
+  <script src="views\angularapp.js"></script>
   </head>
   <body ng-app="myapp">
     <div ng-controller="mycontroller">
@@ -12,7 +12,7 @@
         info:
         <input type="text" ng-model="info"><br>
         <br>
-        <input type="submit" value="submit" ng-click="submit()">
+        <input type="submit" value="submit" ng-click="submit(info)">
       </form>
     </div>
       
