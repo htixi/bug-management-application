@@ -6,7 +6,7 @@ app.use(bodyParser.json())
 
 // API ENDPOINTS
 
-const port = 3000
+const port = 5500
 app.listen(port, () => {
     console.log(`Running on http://localhost:${port}`)
 })
